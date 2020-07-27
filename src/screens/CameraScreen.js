@@ -1,7 +1,6 @@
 import React from "react";
 import { View, Alert } from "react-native";
 import * as Permissions from "expo-permissions";
-
 import ImgStore from '../stores/ImgStore';
 import { observer } from 'mobx-react'
 import * as ImagePicker from 'expo-image-picker';

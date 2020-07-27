@@ -6,6 +6,7 @@ import ReportStore from '../stores/ReportStore';
 import { observer } from 'mobx-react'
 import SvgProcessing from '../components/processingSvg';
 import config from  '../config'
+import LottieWrapper from "../components/LottieWrapper";
 
 @observer
 export default class ProcessingPage extends Component {
@@ -50,7 +51,7 @@ export default class ProcessingPage extends Component {
     return (
         <View style={styles.container}>
             <Text style={styles.processingTxt}>Processing...</Text>
-            <SvgProcessing />
+            <LottieWrapper source={require('../assets/lotties/processing.json')} />
         </View>
     );
   }
