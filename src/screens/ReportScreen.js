@@ -8,7 +8,7 @@ import {
   Alert,
   Image,
 } from "react-native";
-import { NavigationActions, StackActions } from 'react-navigation';
+import { NavigationActions, StackActions } from "react-navigation";
 import Carousel from "react-native-snap-carousel";
 
 import { scrollInterpolator, animatedStyles } from "../utils/animations";
@@ -17,6 +17,10 @@ import config from "../config";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TouchableWithoutFeedback } from "react-native";
 import { withNavigation } from "react-navigation";
+import SSModal from "../components/SSModal";
+import CustomText from "../components/CustomText";
+import CustomButton from "../components/CustomButton";
+import { Colors } from "../components/Colors";
 
 const SLIDER_WIDTH = Dimensions.get("window").width;
 const SLIDER_HEIGHT = Dimensions.get("window").height;
@@ -33,6 +37,7 @@ class ReportPage extends Component {
     index: 0,
     FlatListItems: [],
     imagePath: "",
+    modalVisible: false,
   };
 
   constructor(props) {
@@ -150,10 +155,13 @@ class ReportPage extends Component {
     alert("download");
   }
 
+  delete() {
+    alert("Todo");
+    this.setState({ modalVisible: false });
+  }
+
   reset() {
-    alert('todo')
-    return
-   
+    this.setState({ modalVisible: true });
   }
   render() {
     return (
@@ -199,6 +207,33 @@ class ReportPage extends Component {
             useScrollView={true}
           />
         </View>
+
+        <SSModal
+          closeModal={() => this.setState({ modalVisible: false })}
+          visible={this.state.modalVisible}
+        >
+          <View style={styles.modal}>
+            <CustomText
+              text="Are you sure you want to delete this image?"
+              style={{ textAlign: "center" }}
+              size={20}
+            />
+
+            <CustomButton
+              text="Delete"
+              onPress={() => this.delete()}
+              style={{ width: "50%", marginTop: 25 }}
+            />
+
+            <CustomText
+              text="CANCEL"
+              style={{ textAlign: "center", marginTop: 5 }}
+              size={16}
+              onPress={() => this.setState({ modalVisible: false })}
+              color={Colors.accent}
+            />
+          </View>
+        </SSModal>
       </SafeAreaView>
     );
   }
@@ -241,6 +276,14 @@ const styles = StyleSheet.create({
     width: ITEM_WIDTH,
     height: ITEM_HEIGHT,
     resizeMode: "stretch",
+  },
+
+  modal: {
+    padding: 25,
+    borderRadius: 20,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 export default withNavigation(ReportPage);
