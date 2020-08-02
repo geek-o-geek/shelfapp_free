@@ -156,8 +156,10 @@ class ReportPage extends Component {
   }
 
   delete() {
-    alert("Todo");
-    this.setState({ modalVisible: false });
+    
+    this.setState({ modalVisible: false },()=>{
+      this.props.navigation.navigate('CameraPage')
+    });
   }
 
   reset() {

@@ -4,9 +4,10 @@ import * as Permissions from "expo-permissions";
 import ImgStore from '../stores/ImgStore';
 import { observer } from 'mobx-react'
 import * as ImagePicker from 'expo-image-picker';
+import { withNavigation } from "react-navigation";
 
 @observer
-export default class CameraPage extends React.Component {
+class CameraPage extends React.Component {
   camera = null;
 
   state = {
@@ -15,6 +16,7 @@ export default class CameraPage extends React.Component {
     loaderFlag: false,
     currentCapture: {}
   };
+
 
   handleShortCapture = async () => {
     let result = await ImagePicker.launchCameraAsync({
@@ -38,7 +40,16 @@ export default class CameraPage extends React.Component {
     this.props.navigation.navigate('ProcessingPage');
   }
 
+  didFocus = () =>{
+    
+    this.openCam()
+  }
   async componentDidMount() {
+
+    this.props.navigation.addListener('focus',this.didFocus)
+  }
+
+  openCam = async () => {
     const camera = await Permissions.askAsync(Permissions.CAMERA);
     const hasCameraPermission =
       camera.status === "granted"
@@ -60,3 +71,4 @@ export default class CameraPage extends React.Component {
     )
   }
 }
+export default withNavigation(CameraPage)
