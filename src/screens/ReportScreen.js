@@ -152,7 +152,7 @@ class ReportPage extends Component {
   }
 
   download() {
-    alert("download");
+    alert("downaload");
   }
 
   delete() {
