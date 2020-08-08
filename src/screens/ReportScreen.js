@@ -7,9 +7,12 @@ import {
   FlatList,
   Alert,
   Image,
+  ActivityIndicator
 } from "react-native";
-import { NavigationActions, StackActions } from "react-navigation";
-import Carousel from "react-native-snap-carousel";
+import * as MediaLibrary from 'expo-media-library';
+import * as FileSystem from 'expo-file-system';
+import * as Permissions from 'expo-permissions';
+import Carousel, { Pagination } from "react-native-snap-carousel";
 
 import { scrollInterpolator, animatedStyles } from "../utils/animations";
 import ReportStore from "../stores/ReportStore";
@@ -21,11 +24,13 @@ import SSModal from "../components/SSModal";
 import CustomText from "../components/CustomText";
 import CustomButton from "../components/CustomButton";
 import { Colors } from "../components/Colors";
+import { StackActions } from '@react-navigation/native';
+import axios from "axios";
 
 const SLIDER_WIDTH = Dimensions.get("window").width;
 const SLIDER_HEIGHT = Dimensions.get("window").height;
 const ITEM_WIDTH = Math.round(SLIDER_WIDTH * 0.9);
-const ITEM_HEIGHT = Math.round(SLIDER_HEIGHT * 0.9);
+let ITEM_HEIGHT = Math.round(SLIDER_HEIGHT);
 
 const DATA = [];
 for (let i = 0; i < 2; i++) {
@@ -33,11 +38,20 @@ for (let i = 0; i < 2; i++) {
 }
 
 class ReportPage extends Component {
+  static route = {
+    styles: {
+      gestures: null,
+    },
+  };
+
   state = {
     index: 0,
     FlatListItems: [],
     imagePath: "",
     modalVisible: false,
+    downloadSuccess: false,
+    downloadSuccessIndicator: false,
+    activeSlide: 1
   };
 
   constructor(props) {
@@ -45,54 +59,150 @@ class ReportPage extends Component {
     this._renderItem = this._renderItem.bind(this);
     this.state = {
       FlatListItems: [
-        { id: "1", topic: "7UP", cnt: 0 },
-        { id: "2", topic: "A&W", cnt: 0 },
+        { id: "1", topic: "7UP Bottles", cnt: 0 },
+        { id: "2", topic: "7UP Boxes", cnt: 0 },
+        { id: "3", topic: "7UP Cans", cnt: 0 },
+        { id: "4", topic: "A&W Bottles", cnt: 0 },
+        { id: "5", topic: "A&W Boxes", cnt: 0 },
+        { id: "6", topic: "A&W Cans", cnt: 0 },
       ],
     };
   }
+
+  setReport = (reportArr, lastInsertId) => {
+    const endpoint = `${config.API_URL}/api/set/reports`;
+
+    try {
+      const ob = {
+        reports: reportArr,
+        lastInsertId
+      }
+      const headers = {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      };
+
+      axios
+        .post(endpoint, ob, headers)
+        .then(async (response) => {
+          
+        })
+        .catch((err) => {
+          console.log(err, "error in set report api")
+        });
+    } catch (error) {
+      console.log(error)
+    }
+  };
 
   componentDidMount = async () => {
     const report = await ReportStore.getReport();
 
     const parsedReport = JSON.parse(report);
-    const { imagePath, modelData } = parsedReport;
+    const { imagePath, modelData, lastInsertId } = parsedReport;
+
+    console.log(lastInsertId, "lastInsertIdlastInsertId")
 
     this.setState({ imagePath: `${config.API_URL}${imagePath}` });
 
     const { FlatListItems } = this.state;
 
-    const cntOb = { sevenUpCnt: 0, awCnt: 0 };
+    const cntOb = {
+      awBoxCnt: 0,
+      awCanCnt: 0,
+      awBottleCnt: 0,
+      sevenUpBoxCnt: 0,
+      sevenUpCanCnt: 0,
+      sevenUpBottleCnt: 0,
+    };
+
     modelData.forEach((ob) => {
-      const { name, percentage_probability } = ob;
+      let { name, percentage_probability } = ob;
+
+      // filter the report data
+      if (+percentage_probability < 80) {
+        return;
+      }
+
+      name = name.toLowerCase();
 
       switch (name) {
-        case "7up":
-          ++cntOb["sevenUpCnt"];
+        case "aw-box":
+          ++cntOb["awBoxCnt"];
           break;
-        case "AW":
-          ++cntOb["awCnt"];
+        case "aw-can":
+          ++cntOb["awCanCnt"];
+          break;
+        case "aw-bottle":
+          ++cntOb["awBottleCnt"];
+          break;
+        case "7up-box":
+          ++cntOb["sevenUpBoxCnt"];
+          break;
+        case "7up-can":
+          ++cntOb["sevenUpCanCnt"];
+          break;
+        case "7up-bottle":
+          ++cntOb["sevenUpBottleCnt"];
           break;
         default:
           break;
       }
     });
+
+    const insertArr = []
+
+    const objectsArr = ['can', 'box', 'bottle']
+    const brandsArr = ['aw', '7up']
 
     FlatListItems.forEach((ob) => {
       let { topic } = ob;
 
       switch (topic) {
-        case "7UP":
-          ob["cnt"] = +cntOb["sevenUpCnt"];
+        case "A&W Boxes":
+          const obj = { cnt: +cntOb["awBoxCnt"], objectId: 2, brandId: 1 }
+          insertArr.push(obj)
+          ob["cnt"] = +cntOb["awBoxCnt"];
           break;
-        case "A&W":
-          ob["cnt"] = +cntOb["awCnt"];
+        case "A&W Cans":
+          const obj1 = { cnt: +cntOb["awCanCnt"], objectId: 1, brandId: 1 }
+          insertArr.push(obj1)
+          ob["cnt"] = +cntOb["awCanCnt"];
+          break;
+        case "A&W Bottles":
+          const obj2 = { cnt: +cntOb["awCanCnt"], objectId: 3, brandId: 1 }
+          insertArr.push(obj2)
+          ob["cnt"] = +cntOb["awBottleCnt"];
+          break;
+        case "7UP Boxes":
+          const obj3 = { cnt: +cntOb["awCanCnt"], objectId: 2, brandId: 2 }
+          insertArr.push(obj3)
+          ob["cnt"] = +cntOb["sevenUpBoxCnt"];
+          break;
+        case "7UP Cans":
+          const obj4 = { cnt: +cntOb["awCanCnt"], objectId: 1, brandId: 2 }
+          insertArr.push(obj4)
+          ob["cnt"] = +cntOb["sevenUpCanCnt"];
+          break;
+        case "7UP Bottles":
+          const obj5 = { cnt: +cntOb["awCanCnt"], objectId: 3, brandId: 2 }
+          insertArr.push(obj5)
+          ob["cnt"] = +cntOb["sevenUpBottleCnt"];
           break;
         default:
           break;
       }
     });
 
-    cntOb = { sevenUpCnt: 0, awCnt: 0 };
+    this.setReport(insertArr, lastInsertId);
+
+    cntOb = {  awBoxCnt: 0,
+      awCanCnt: 0,
+      awBottleCnt: 0,
+      sevenUpBoxCnt: 0,
+      sevenUpCanCnt: 0,
+      sevenUpBottleCnt: 0, };
 
     this.setState({ FlatListItems });
   };
@@ -104,6 +214,29 @@ class ReportPage extends Component {
       />
     );
   };
+
+  get pagination () {
+    const { activeSlide } = this.state;
+    return (
+        <Pagination
+          dotsLength={2}
+          activeDotIndex={activeSlide}
+          containerStyle={{ backgroundColor: '#21252e' }}
+          dotStyle={{
+              width: 10,
+              height: 10,
+              borderRadius: 5,
+              marginHorizontal: 8,
+              backgroundColor: 'white'
+          }}
+          inactiveDotStyle={{
+            backgroundColor: 'grey'
+          }}
+          inactiveDotOpacity={0.4}
+          inactiveDotScale={0.6}
+        />
+    );
+  }
 
   GetItem(item) {
     Alert.alert(item);
@@ -128,7 +261,6 @@ class ReportPage extends Component {
         <Text style={styles.headTitle}>Report:</Text>
         <FlatList
           data={this.state.FlatListItems}
-          // ItemSeparatorComponent={this.FlatListItemSeparator}
           renderItem={({ item }) => (
             <View style={styles.listItem}>
               {item.id == 1 ? (
@@ -151,20 +283,70 @@ class ReportPage extends Component {
     return item == 0 ? this._renderImageItem() : this._renderTableItem();
   }
 
-  download() {
-    alert("downaload");
+  delete() {
+    this.props.navigation.dispatch(StackActions.popToTop());
   }
 
-  delete() {
-    
-    this.setState({ modalVisible: false },()=>{
-      this.props.navigation.navigate('CameraPage')
-    });
+  downloadSuccess = () => {
+    return (
+      <SSModal
+          closeModal={() => this.setState({ downloadSuccess: false })}
+          visible={this.state.downloadSuccess}
+        >
+          <View style={styles.modal}>
+            <CustomText
+              text="Image saved in gallery successfully"
+              style={{ textAlign: "center" }}
+              size={20}
+            />
+
+            <CustomText
+              text="OK"
+              style={{ textAlign: "center", marginTop: 5 }}
+              size={16}
+              onPress={() => this.setState({ downloadSuccess: false })}
+              color={Colors.accent}
+            />
+          </View>
+        </SSModal>
+    )
+  }
+
+  download() {
+    const uri = this.state.imagePath;
+  
+    if(!uri) return
+    this.setState({ downloadSuccess: false, downloadSuccessIndicator: true })
+    let fileUri = FileSystem.documentDirectory + `shelfset_${new Date().toISOString()}.jpg`;
+    FileSystem.downloadAsync(uri, fileUri)
+      .then(({ uri }) => {
+        this.saveFile(uri);
+        this.setState({ downloadSuccess: true, downloadSuccessIndicator: false })
+      })
+      .catch((error) => {
+        this.setState({ downloadSuccess: false, downloadSuccessIndicator: false })
+        console.error(error);
+      });
+  }
+
+  saveFile = async (fileUri: string) => {
+    const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+    if (status === "granted") {
+      const asset = await MediaLibrary.createAssetAsync(fileUri);
+      await MediaLibrary.createAlbumAsync("Shelfset", asset, false);
+    }
+  };
+
+  downloadIndicator = () => {
+    return (
+      <ActivityIndicator size="large" color="#00ff00" />
+    )
   }
 
   reset() {
     this.setState({ modalVisible: true });
   }
+
   render() {
     return (
       <SafeAreaView style={{ flex: 1 }}>
@@ -194,13 +376,14 @@ class ReportPage extends Component {
               />
             </TouchableWithoutFeedback>
           </View>
+          {this.state.downloadSuccessIndicator? this.downloadIndicator(): null}
           <Carousel
             ref={(c) => (this.carousel = c)}
             data={DATA}
             renderItem={this._renderItem}
             sliderWidth={SLIDER_WIDTH}
             itemWidth={ITEM_WIDTH}
-            scrollEnabled={this.state.index != 1}
+            scrollEnabled={true}
             containerCustomStyle={styles.carouselContainer}
             inactiveSlideShift={0}
             onSnapToItem={(index) => this.setState({ index })}
@@ -208,6 +391,7 @@ class ReportPage extends Component {
             slideInterpolatedStyle={animatedStyles}
             useScrollView={true}
           />
+          { this.pagination }
         </View>
 
         <SSModal
@@ -236,6 +420,8 @@ class ReportPage extends Component {
             />
           </View>
         </SSModal>
+
+        {this.state.downloadSuccess? this.downloadSuccess(): null}
       </SafeAreaView>
     );
   }
@@ -251,7 +437,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#21252e",
   },
   carouselContainer: {
-    marginTop: 50,
+    marginTop: 50
   },
   itemContainer: {
     width: ITEM_WIDTH,
@@ -276,16 +462,15 @@ const styles = StyleSheet.create({
   },
   imgDimensions: {
     width: ITEM_WIDTH,
-    height: ITEM_HEIGHT,
-    resizeMode: "stretch",
+    height: ITEM_HEIGHT-250,
+    resizeMode: "center",
   },
-
   modal: {
     padding: 25,
     borderRadius: 20,
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
-  },
+  }
 });
 export default withNavigation(ReportPage);

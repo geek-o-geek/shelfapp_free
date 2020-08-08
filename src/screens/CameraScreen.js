@@ -17,7 +17,6 @@ class CameraPage extends React.Component {
     currentCapture: {}
   };
 
-
   handleShortCapture = async () => {
     let result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
@@ -33,20 +32,23 @@ class CameraPage extends React.Component {
   
     let match = /\.(\w+)$/.exec(filename);
     let type = match ? `image/${match[1]}` : `image`;
-
-    console.log({ uri: localUri, name: filename, type })
   
     await ImgStore.setImg({ uri: localUri, name: filename, type })
     this.props.navigation.navigate('ProcessingPage');
   }
 
   didFocus = () =>{
-    
     this.openCam()
   }
-  async componentDidMount() {
 
-    this.props.navigation.addListener('focus',this.didFocus)
+  componentDidMount() {
+    setTimeout(() => {
+      this.props.navigation.addListener('focus', this.didFocus)
+    }, 400) 
+  }
+
+  componentWillUnmount(){
+    console.log("blurred")
   }
 
   openCam = async () => {
@@ -71,4 +73,5 @@ class CameraPage extends React.Component {
     )
   }
 }
+
 export default withNavigation(CameraPage)
