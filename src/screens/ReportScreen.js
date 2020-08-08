@@ -5,13 +5,17 @@ import {
   Dimensions,
   StyleSheet,
   FlatList,
+  BackHandler,
+  LayoutAnimation,
+  UIManager,
   Alert,
   Image,
-  ActivityIndicator
+  ActivityIndicator,
 } from "react-native";
-import * as MediaLibrary from 'expo-media-library';
-import * as FileSystem from 'expo-file-system';
-import * as Permissions from 'expo-permissions';
+import * as MediaLibrary from "expo-media-library";
+import { Ionicons } from '@expo/vector-icons';
+import * as FileSystem from "expo-file-system";
+import * as Permissions from "expo-permissions";
 import Carousel, { Pagination } from "react-native-snap-carousel";
 
 import { scrollInterpolator, animatedStyles } from "../utils/animations";
@@ -24,12 +28,13 @@ import SSModal from "../components/SSModal";
 import CustomText from "../components/CustomText";
 import CustomButton from "../components/CustomButton";
 import { Colors } from "../components/Colors";
-import { StackActions } from '@react-navigation/native';
+import { StackActions } from "@react-navigation/native";
 import axios from "axios";
+import { Platform } from "react-native";
 
 const SLIDER_WIDTH = Dimensions.get("window").width;
 const SLIDER_HEIGHT = Dimensions.get("window").height;
-const ITEM_WIDTH = Math.round(SLIDER_WIDTH * 0.9);
+const ITEM_WIDTH = Math.round(SLIDER_WIDTH);
 let ITEM_HEIGHT = Math.round(SLIDER_HEIGHT);
 
 const DATA = [];
@@ -50,8 +55,10 @@ class ReportPage extends Component {
     imagePath: "",
     modalVisible: false,
     downloadSuccess: false,
+    fullViewContent: [],
+    showFullImage: false,
     downloadSuccessIndicator: false,
-    activeSlide: 1
+    activeSlide: 1,
   };
 
   constructor(props) {
@@ -75,8 +82,8 @@ class ReportPage extends Component {
     try {
       const ob = {
         reports: reportArr,
-        lastInsertId
-      }
+        lastInsertId,
+      };
       const headers = {
         headers: {
           "Content-Type": "application/json",
@@ -85,24 +92,46 @@ class ReportPage extends Component {
 
       axios
         .post(endpoint, ob, headers)
-        .then(async (response) => {
-          
-        })
+        .then(async (response) => {})
         .catch((err) => {
-          console.log(err, "error in set report api")
+          console.log(err, "error in set report api");
         });
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   };
 
+  hardwareBackPress = () => {
+    if (this.state.showFullImage) {
+      // LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      this.setState({ showFullImage: false },()=>{
+        setTimeout(() => {
+          this.carousel.snapToItem(this.state.index,)
+        }, 4);
+      });
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  componentWillUnmount(){
+    BackHandler.removeEventListener("hardwareBackPress", this.hardwareBackPress);
+
+  }
   componentDidMount = async () => {
+    if (Platform.OS == "android") {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+
+    BackHandler.addEventListener("hardwareBackPress", this.hardwareBackPress);
+
     const report = await ReportStore.getReport();
 
     const parsedReport = JSON.parse(report);
     const { imagePath, modelData, lastInsertId } = parsedReport;
 
-    console.log(lastInsertId, "lastInsertIdlastInsertId")
+    console.log(lastInsertId, "lastInsertIdlastInsertId");
 
     this.setState({ imagePath: `${config.API_URL}${imagePath}` });
 
@@ -151,43 +180,43 @@ class ReportPage extends Component {
       }
     });
 
-    const insertArr = []
+    const insertArr = [];
 
-    const objectsArr = ['can', 'box', 'bottle']
-    const brandsArr = ['aw', '7up']
+    const objectsArr = ["can", "box", "bottle"];
+    const brandsArr = ["aw", "7up"];
 
     FlatListItems.forEach((ob) => {
       let { topic } = ob;
 
       switch (topic) {
         case "A&W Boxes":
-          const obj = { cnt: +cntOb["awBoxCnt"], objectId: 2, brandId: 1 }
-          insertArr.push(obj)
+          const obj = { cnt: +cntOb["awBoxCnt"], objectId: 2, brandId: 1 };
+          insertArr.push(obj);
           ob["cnt"] = +cntOb["awBoxCnt"];
           break;
         case "A&W Cans":
-          const obj1 = { cnt: +cntOb["awCanCnt"], objectId: 1, brandId: 1 }
-          insertArr.push(obj1)
+          const obj1 = { cnt: +cntOb["awCanCnt"], objectId: 1, brandId: 1 };
+          insertArr.push(obj1);
           ob["cnt"] = +cntOb["awCanCnt"];
           break;
         case "A&W Bottles":
-          const obj2 = { cnt: +cntOb["awCanCnt"], objectId: 3, brandId: 1 }
-          insertArr.push(obj2)
+          const obj2 = { cnt: +cntOb["awCanCnt"], objectId: 3, brandId: 1 };
+          insertArr.push(obj2);
           ob["cnt"] = +cntOb["awBottleCnt"];
           break;
         case "7UP Boxes":
-          const obj3 = { cnt: +cntOb["awCanCnt"], objectId: 2, brandId: 2 }
-          insertArr.push(obj3)
+          const obj3 = { cnt: +cntOb["awCanCnt"], objectId: 2, brandId: 2 };
+          insertArr.push(obj3);
           ob["cnt"] = +cntOb["sevenUpBoxCnt"];
           break;
         case "7UP Cans":
-          const obj4 = { cnt: +cntOb["awCanCnt"], objectId: 1, brandId: 2 }
-          insertArr.push(obj4)
+          const obj4 = { cnt: +cntOb["awCanCnt"], objectId: 1, brandId: 2 };
+          insertArr.push(obj4);
           ob["cnt"] = +cntOb["sevenUpCanCnt"];
           break;
         case "7UP Bottles":
-          const obj5 = { cnt: +cntOb["awCanCnt"], objectId: 3, brandId: 2 }
-          insertArr.push(obj5)
+          const obj5 = { cnt: +cntOb["awCanCnt"], objectId: 3, brandId: 2 };
+          insertArr.push(obj5);
           ob["cnt"] = +cntOb["sevenUpBottleCnt"];
           break;
         default:
@@ -197,12 +226,14 @@ class ReportPage extends Component {
 
     this.setReport(insertArr, lastInsertId);
 
-    cntOb = {  awBoxCnt: 0,
+    cntOb = {
+      awBoxCnt: 0,
       awCanCnt: 0,
       awBottleCnt: 0,
       sevenUpBoxCnt: 0,
       sevenUpCanCnt: 0,
-      sevenUpBottleCnt: 0, };
+      sevenUpBottleCnt: 0,
+    };
 
     this.setState({ FlatListItems });
   };
@@ -215,49 +246,77 @@ class ReportPage extends Component {
     );
   };
 
-  get pagination () {
+  get pagination() {
     const { activeSlide } = this.state;
     return (
-        <Pagination
-          dotsLength={2}
-          activeDotIndex={activeSlide}
-          containerStyle={{ backgroundColor: '#21252e' }}
-          dotStyle={{
-              width: 10,
-              height: 10,
-              borderRadius: 5,
-              marginHorizontal: 8,
-              backgroundColor: 'white'
-          }}
-          inactiveDotStyle={{
-            backgroundColor: 'grey'
-          }}
-          inactiveDotOpacity={0.4}
-          inactiveDotScale={0.6}
-        />
+      <Pagination
+        dotsLength={2}
+        activeDotIndex={activeSlide}
+        containerStyle={{ backgroundColor: "#21252e" }}
+        dotStyle={{
+          width: 10,
+          height: 10,
+          borderRadius: 5,
+          marginHorizontal: 8,
+          backgroundColor: "white",
+        }}
+        inactiveDotStyle={{
+          backgroundColor: "grey",
+        }}
+        inactiveDotOpacity={0.4}
+        inactiveDotScale={0.6}
+      />
     );
   }
 
   GetItem(item) {
     Alert.alert(item);
   }
+  viewFullImage(type, content) {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    this.setState({ showFullImage: true, fullViewContent: content });
+  }
 
   _renderImageItem = () => {
-    return (
+    let view = (
       <View style={styles.itemContainer}>
         <Image
           source={{
             uri: this.state.imagePath,
           }}
-          style={styles.imgDimensions}
+          resizeMode={"center"}
+          style={[
+            styles.imgDimensions,
+            this.state.showFullImage && { height: ITEM_HEIGHT },
+          ]}
         />
       </View>
+    );
+
+    let viewFull = (
+      <View style={[styles.itemContainer, { marginTop: 10 }]}>
+        <Image
+          source={{
+            uri: this.state.imagePath,
+          }}
+          resizeMode={"cover"}
+          style={[styles.imgDimensions, { height: ITEM_HEIGHT }]}
+        />
+      </View>
+    );
+
+    return (
+      <TouchableWithoutFeedback
+        onPress={() => this.viewFullImage("image", viewFull)}
+      >
+        {view}
+      </TouchableWithoutFeedback>
     );
   };
 
   _renderTableItem = () => {
-    return (
-      <View style={styles.itemContainer}>
+    let view = (
+      <View style={[styles.itemContainer, { marginTop: 10 }]}>
         <Text style={styles.headTitle}>Report:</Text>
         <FlatList
           data={this.state.FlatListItems}
@@ -277,6 +336,34 @@ class ReportPage extends Component {
         />
       </View>
     );
+    return (
+      <TouchableWithoutFeedback
+        onPress={() => this.viewFullImage("report", view)}
+      >
+        <View style={styles.itemContainer}>
+          <Text style={styles.headTitle}>Report:</Text>
+          <FlatList
+            data={this.state.FlatListItems}
+            renderItem={({ item }) => (
+              <View style={styles.listItem}>
+                {item.id == 1 ? (
+                  <Text style={styles.subHeadTitle}>Count:</Text>
+                ) : null}
+                <Text
+                  style={styles.item}
+                  onPress={this.GetItem.bind(
+                    this,
+                    `${item.topic} : ${item.cnt}`
+                  )}
+                >
+                  {item.topic} : {item.cnt}
+                </Text>
+              </View>
+            )}
+          />
+        </View>
+      </TouchableWithoutFeedback>
+    );
   };
 
   _renderItem({ item }) {
@@ -290,41 +377,48 @@ class ReportPage extends Component {
   downloadSuccess = () => {
     return (
       <SSModal
-          closeModal={() => this.setState({ downloadSuccess: false })}
-          visible={this.state.downloadSuccess}
-        >
-          <View style={styles.modal}>
-            <CustomText
-              text="Image saved in gallery successfully"
-              style={{ textAlign: "center" }}
-              size={20}
-            />
+        closeModal={() => this.setState({ downloadSuccess: false })}
+        visible={this.state.downloadSuccess}
+      >
+        <View style={styles.modal}>
+          <CustomText
+            text="Image saved in gallery successfully"
+            style={{ textAlign: "center" }}
+            size={20}
+          />
 
-            <CustomText
-              text="OK"
-              style={{ textAlign: "center", marginTop: 5 }}
-              size={16}
-              onPress={() => this.setState({ downloadSuccess: false })}
-              color={Colors.accent}
-            />
-          </View>
-        </SSModal>
-    )
-  }
+          <CustomText
+            text="OK"
+            style={{ textAlign: "center", marginTop: 5 }}
+            size={16}
+            onPress={() => this.setState({ downloadSuccess: false })}
+            color={Colors.accent}
+          />
+        </View>
+      </SSModal>
+    );
+  };
 
   download() {
     const uri = this.state.imagePath;
-  
-    if(!uri) return
-    this.setState({ downloadSuccess: false, downloadSuccessIndicator: true })
-    let fileUri = FileSystem.documentDirectory + `shelfset_${new Date().toISOString()}.jpg`;
+
+    if (!uri) return;
+    this.setState({ downloadSuccess: false, downloadSuccessIndicator: true });
+    let fileUri =
+      FileSystem.documentDirectory + `shelfset_${new Date().toISOString()}.jpg`;
     FileSystem.downloadAsync(uri, fileUri)
       .then(({ uri }) => {
         this.saveFile(uri);
-        this.setState({ downloadSuccess: true, downloadSuccessIndicator: false })
+        this.setState({
+          downloadSuccess: true,
+          downloadSuccessIndicator: false,
+        });
       })
       .catch((error) => {
-        this.setState({ downloadSuccess: false, downloadSuccessIndicator: false })
+        this.setState({
+          downloadSuccess: false,
+          downloadSuccessIndicator: false,
+        });
         console.error(error);
       });
   }
@@ -338,13 +432,20 @@ class ReportPage extends Component {
   };
 
   downloadIndicator = () => {
-    return (
-      <ActivityIndicator size="large" color="#00ff00" />
-    )
-  }
+    return <ActivityIndicator size="large" color="#00ff00" />;
+  };
 
   reset() {
-    this.setState({ modalVisible: true });
+    if(this.state.showFullImage){
+      this.setState({ showFullImage:false },()=>{});
+      setTimeout(() => {
+        this.carousel.snapToItem(this.state.index,)
+      }, 4);
+
+    } else {
+
+      this.setState({ modalVisible: true });
+    }
   }
 
   render() {
@@ -361,11 +462,15 @@ class ReportPage extends Component {
             }}
           >
             <TouchableWithoutFeedback onPress={() => this.reset()}>
+            {this.state.showFullImage ? 
+              <Ionicons name="md-arrow-back" size={36} style={{marginLeft:8,bottom:1}} color="#fff" />
+            :
               <Image
                 source={require("../assets/img/x.png")}
                 style={{ width: 40, height: 40 }}
                 resizeMode="contain"
               />
+            }
             </TouchableWithoutFeedback>
 
             <TouchableWithoutFeedback onPress={() => this.download()}>
@@ -376,22 +481,31 @@ class ReportPage extends Component {
               />
             </TouchableWithoutFeedback>
           </View>
-          {this.state.downloadSuccessIndicator? this.downloadIndicator(): null}
-          <Carousel
-            ref={(c) => (this.carousel = c)}
-            data={DATA}
-            renderItem={this._renderItem}
-            sliderWidth={SLIDER_WIDTH}
-            itemWidth={ITEM_WIDTH}
-            scrollEnabled={true}
-            containerCustomStyle={styles.carouselContainer}
-            inactiveSlideShift={0}
-            onSnapToItem={(index) => this.setState({ index })}
-            scrollInterpolator={scrollInterpolator}
-            slideInterpolatedStyle={animatedStyles}
-            useScrollView={true}
-          />
-          { this.pagination }
+          {this.state.downloadSuccessIndicator
+            ? this.downloadIndicator()
+            : null}
+
+          {this.state.showFullImage ? (
+            <ReportPageFullScreen content={this.state.fullViewContent} />
+          ) : (
+            <>
+              <Carousel
+                ref={(c) => (this.carousel = c)}
+                data={DATA}
+                renderItem={this._renderItem}
+                sliderWidth={SLIDER_WIDTH}
+                itemWidth={ITEM_WIDTH * 0.9}
+                scrollEnabled={true}
+                containerCustomStyle={styles.carouselContainer}
+                inactiveSlideShift={0}
+                onSnapToItem={(index) => this.setState({ index })}
+                scrollInterpolator={scrollInterpolator}
+                slideInterpolatedStyle={animatedStyles}
+                useScrollView={true}
+              />
+              {this.pagination}
+            </>
+          )}
         </View>
 
         <SSModal
@@ -421,9 +535,17 @@ class ReportPage extends Component {
           </View>
         </SSModal>
 
-        {this.state.downloadSuccess? this.downloadSuccess(): null}
+        {this.state.downloadSuccess ? this.downloadSuccess() : null}
       </SafeAreaView>
     );
+  }
+}
+
+class ReportPageFullScreen extends Component {
+  componentDidMount() {}
+
+  render() {
+    return <>{this.props.content}</>;
   }
 }
 
@@ -431,13 +553,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
     padding: 10,
     paddingBottom: 20,
     backgroundColor: "#21252e",
   },
   carouselContainer: {
-    marginTop: 50
+    marginTop: 50,
   },
   itemContainer: {
     width: ITEM_WIDTH,
@@ -462,8 +583,7 @@ const styles = StyleSheet.create({
   },
   imgDimensions: {
     width: ITEM_WIDTH,
-    height: ITEM_HEIGHT-250,
-    resizeMode: "center",
+    height: ITEM_HEIGHT - 250,
   },
   modal: {
     padding: 25,
@@ -471,6 +591,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
-  }
+  },
 });
 export default withNavigation(ReportPage);

@@ -24,7 +24,8 @@ class CameraPage extends React.Component {
     });
   
     if (result.cancelled) {
-      return;
+      this.openCam()
+      return
     }
   
     let localUri = result.uri;
@@ -42,9 +43,7 @@ class CameraPage extends React.Component {
   }
 
   componentDidMount() {
-    setTimeout(() => {
       this.props.navigation.addListener('focus', this.didFocus)
-    }, 400) 
   }
 
   componentWillUnmount(){
