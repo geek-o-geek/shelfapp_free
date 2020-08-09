@@ -383,7 +383,7 @@ class ReportPage extends Component {
   }
 
   delete() {
-    this.props.navigation.dispatch(StackActions.popToTop());
+    this.props.navigation.navigate('CameraPage')
   }
 
   downloadSuccess = () => {

@@ -15,9 +15,6 @@ function MainStackNavigator() {
     <NavigationContainer>
       <Stack.Navigator
         initialRouteName='CameraPage'
-        mode="modal"
-        swipeEnabled={false}
-        animationEnabled={false}
       >
         <Stack.Screen
           options={{ headerShown: false, gestureEnabled: false, swipeEnabled: false, animationEnabled: false }}

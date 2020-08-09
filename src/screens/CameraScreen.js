@@ -1,9 +1,9 @@
 import React from "react";
-import { View, Alert } from "react-native";
+import { View, Alert,Modal } from "react-native";
 import * as Permissions from "expo-permissions";
-import ImgStore from '../stores/ImgStore';
-import { observer } from 'mobx-react'
-import * as ImagePicker from 'expo-image-picker';
+import ImgStore from "../stores/ImgStore";
+import { observer } from "mobx-react";
+import * as ImagePicker from "expo-image-picker";
 import { withNavigation } from "react-navigation";
 
 @observer
@@ -14,7 +14,8 @@ class CameraPage extends React.Component {
     capturing: null,
     hasCameraPermission: null,
     loaderFlag: false,
-    currentCapture: {}
+    modalVisible: true,
+    currentCapture: {},
   };
 
   handleShortCapture = async () => {
@@ -22,55 +23,65 @@ class CameraPage extends React.Component {
       allowsEditing: true,
       aspect: [4, 3],
     });
-  
+
     if (result.cancelled) {
-      this.openCam()
-      return
+      this.openCam();
+      return;
     }
-  
+
     let localUri = result.uri;
-    let filename = localUri.split('/').pop();
-  
+    let filename = localUri.split("/").pop();
+
     let match = /\.(\w+)$/.exec(filename);
     let type = match ? `image/${match[1]}` : `image`;
-  
-    await ImgStore.setImg({ uri: localUri, name: filename, type })
-    this.props.navigation.navigate('ProcessingPage');
-  }
 
-  didFocus = () =>{
-    this.openCam()
-  }
+    await ImgStore.setImg({ uri: localUri, name: filename, type });
+    this.setState({ modalVisible: false }, () => {
+        this.props.navigation.navigate("ProcessingPage");
+    });
+  };
+
+  didFocus = () => {
+    this.setState({ modalVisible: true }, () => {
+      setTimeout(() => {
+        this.openCam();
+      }, 100);
+    });
+  };
 
   componentDidMount() {
-      this.props.navigation.addListener('focus', this.didFocus)
+    this.props.navigation.addListener("focus", this.didFocus);
   }
 
-  componentWillUnmount(){
-    console.log("blurred")
+  componentWillUnmount() {
+    console.log("blurred");
   }
 
   openCam = async () => {
     const camera = await Permissions.askAsync(Permissions.CAMERA);
-    const hasCameraPermission =
-      camera.status === "granted"
+    const hasCameraPermission = camera.status === "granted";
 
     if (hasCameraPermission === null) {
-      Alert.alert('Camera has no permission')
-      return 
+      Alert.alert("Camera has no permission");
+      return;
     } else if (hasCameraPermission === false) {
-      Alert.alert('Camera has no permission')
-      return
+      Alert.alert("Camera has no permission");
+      return;
     }
 
-    this.handleShortCapture()
-  }
+    this.handleShortCapture();
+  };
 
-  render(){
+  render() {
     return (
-      <View style={{flex:1,backgroundColor:'#21252e'}} />
-    )
+      <Modal
+        visible={this.state.modalVisible}
+        style={{ flex: 1, backgroundColor: "#21252e" }}
+      >
+        <View style={{ flex: 1, backgroundColor: "#21252e" }}></View>
+      </Modal>
+    );
   }
 }
 
-export default withNavigation(CameraPage)
+export default withNavigation(CameraPage);
