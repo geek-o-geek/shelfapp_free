@@ -31,6 +31,7 @@ import { Colors } from "../components/Colors";
 import { StackActions } from "@react-navigation/native";
 import axios from "axios";
 import { Platform } from "react-native";
+import ImageZoom from 'react-native-image-pan-zoom';
 
 const SLIDER_WIDTH = Dimensions.get("window").width;
 const SLIDER_HEIGHT = Dimensions.get("window").height;
@@ -59,6 +60,8 @@ class ReportPage extends Component {
     showFullImage: false,
     downloadSuccessIndicator: false,
     activeSlide: 1,
+    imageSaved: false,
+    downloadMsg: "Image saved in gallery successfully"
   };
 
   constructor(props) {
@@ -272,6 +275,7 @@ class ReportPage extends Component {
   GetItem(item) {
     Alert.alert(item);
   }
+  
   viewFullImage(type, content) {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     this.setState({ showFullImage: true, fullViewContent: content });
@@ -294,15 +298,23 @@ class ReportPage extends Component {
     );
 
     let viewFull = (
-      <View style={[styles.itemContainer, { marginTop: 10 }]}>
+      <ImageZoom cropWidth={Dimensions.get('window').width}
+      cropHeight={Dimensions.get('window').height}
+      imageWidth={ITEM_WIDTH}
+      imageHeight={ITEM_HEIGHT}
+      panToMove={true}
+      pinchToZoom={true}
+      enableCenterFocus={true}
+      centerOn={{ x: 0, y: 0, scale: 1, duration: 10 }}
+      >
         <Image
           source={{
             uri: this.state.imagePath,
           }}
-          resizeMode={"cover"}
+          resizeMode={"contain"}
           style={[styles.imgDimensions, { height: ITEM_HEIGHT }]}
         />
-      </View>
+      </ImageZoom>
     );
 
     return (
@@ -382,7 +394,7 @@ class ReportPage extends Component {
       >
         <View style={styles.modal}>
           <CustomText
-            text="Image saved in gallery successfully"
+            text={this.state.downloadMsg || "Image saved in gallery successfully"}
             style={{ textAlign: "center" }}
             size={20}
           />
@@ -391,7 +403,7 @@ class ReportPage extends Component {
             text="OK"
             style={{ textAlign: "center", marginTop: 5 }}
             size={16}
-            onPress={() => this.setState({ downloadSuccess: false })}
+            onPress={() => this.setState({ downloadSuccess: false, imageSaved: true })}
             color={Colors.accent}
           />
         </View>
@@ -400,6 +412,11 @@ class ReportPage extends Component {
   };
 
   download() {
+    if(this.state.imageSaved){
+      this.setState({downloadMsg: 'Image already saved', downloadSuccess: true})
+      return
+    }
+
     const uri = this.state.imagePath;
 
     if (!uri) return;
@@ -439,11 +456,13 @@ class ReportPage extends Component {
     if(this.state.showFullImage){
       this.setState({ showFullImage:false },()=>{});
       setTimeout(() => {
-        this.carousel.snapToItem(this.state.index,)
+        this.carousel.snapToItem(this.state.index)
       }, 4);
-
     } else {
-
+      if(this.state.imageSaved){
+        this.delete()
+        return
+      }
       this.setState({ modalVisible: true });
     }
   }
@@ -510,7 +529,7 @@ class ReportPage extends Component {
 
         <SSModal
           closeModal={() => this.setState({ modalVisible: false })}
-          visible={this.state.modalVisible}
+          visible={this.state.modalVisible && !this.state.imageSaved}
         >
           <View style={styles.modal}>
             <CustomText
