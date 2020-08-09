@@ -564,7 +564,7 @@ class ReportPageFullScreen extends Component {
   componentDidMount() {}
 
   render() {
-    return <>{this.props.content}</>;
+    return <>{this.props.content}</>
   }
 }
 
