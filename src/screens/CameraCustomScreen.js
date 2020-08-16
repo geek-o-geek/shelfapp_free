@@ -22,6 +22,7 @@ class CameraCustomScreen extends React.Component {
     flashMode: Camera.Constants.FlashMode.off,
     loaderFlag: false,
     currentCapture: {},
+    showTut:true,
     loading: true,
   };
 
@@ -38,6 +39,7 @@ class CameraCustomScreen extends React.Component {
   }
 
   handleShortCapture = async () => {
+    this.setState({showTut:false,})
     const result = await this.camera.takePictureAsync();
 
     this.setState({
@@ -102,7 +104,7 @@ class CameraCustomScreen extends React.Component {
 
           {this.state.loaderFlag ? this._renderLoader() : null}
         </View>
-
+      {this.state.showTut && 
         <View
           style={{
             flex: 1,
@@ -132,6 +134,8 @@ class CameraCustomScreen extends React.Component {
             </View>
           </View>
         </View>
+      }
+
 
         <Toolbar
           capturing={capturing}
