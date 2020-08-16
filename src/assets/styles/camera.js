@@ -9,6 +9,14 @@ export default StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
+
+    txt:{
+        color:'#fff',
+        fontSize:18,
+        textAlign:'center',
+      },
+
+
     preview: {
         height: winHeight,
         width: winWidth,

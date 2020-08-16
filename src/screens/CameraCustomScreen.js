@@ -1,13 +1,14 @@
 import React from "react";
 import { Camera } from "expo-camera";
-import { View, Text, ActivityIndicator } from "react-native";
+import { View, Text, ActivityIndicator, Image,Dimensions } from "react-native";
 import * as Permissions from "expo-permissions";
 import ImgStore from "../stores/ImgStore";
 import styles from "../assets/styles/camera";
 import Toolbar from "./toolbar.component";
 import { copilot, walkthroughable, CopilotStep } from "react-native-copilot";
-import { Ionicons } from '@expo/vector-icons';
-import * as Font from 'expo-font';
+import { Ionicons } from "@expo/vector-icons";
+import * as Font from "expo-font";
+const { width: winWidth, height: winHeight } = Dimensions.get('window');
 
 const WalkthroughableText = walkthroughable(Text);
 
@@ -21,7 +22,7 @@ class CameraCustomScreen extends React.Component {
     flashMode: Camera.Constants.FlashMode.off,
     loaderFlag: false,
     currentCapture: {},
-    loading: true
+    loading: true,
   };
 
   setFlashMode = (flashMode) => this.setState({ flashMode });
@@ -40,7 +41,7 @@ class CameraCustomScreen extends React.Component {
     const result = await this.camera.takePictureAsync();
 
     this.setState({
-      capturing: false
+      capturing: false,
     });
 
     let localUri = result.uri;
@@ -56,18 +57,23 @@ class CameraCustomScreen extends React.Component {
   async componentDidMount() {
     await Font.loadAsync({
       ...Ionicons.font,
-    })
-    this.setState({ loading: false })
+    });
+    this.setState({ loading: false });
     const camera = await Permissions.askAsync(Permissions.CAMERA);
-    const hasCameraPermission =
-      camera.status === "granted"
+    const hasCameraPermission = camera.status === "granted";
 
     this.setState({ hasCameraPermission });
-    this.handleCoPilot()
+    this.handleCoPilot();
   }
 
   _renderLoader = () => {
-    return <ActivityIndicator style={{marginTop: '70%'}} size="large" color="#edf1fe" />;
+    return (
+      <ActivityIndicator
+        style={{ marginTop: "70%" }}
+        size="large"
+        color="#edf1fe"
+      />
+    );
   };
 
   render() {
@@ -93,7 +99,38 @@ class CameraCustomScreen extends React.Component {
             style={styles.preview}
             ref={(camera) => (this.camera = camera)}
           />
-          {this.state.loaderFlag ? this._renderLoader(): null} 
+
+          {this.state.loaderFlag ? this._renderLoader() : null}
+        </View>
+
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.6)",
+            zIndex: 0,
+            position: "absolute",
+            height: "100%",
+            width: "100%",
+          }}
+        >
+          <View style={{ flex: 1, justifyContent: "center" }}>
+            <Text style={styles.txt}>
+              Detect A&W and 7UP bottles, cans and boxes
+            </Text>
+          </View>
+
+          <View style={{ flex: 0.64, width: "50%",paddingLeft:15 }}>
+            <View style={{ alignSelf: "flex-start", alignItems: "center" }}>
+              <Text style={[styles.txt]}>
+                Press button to detect A&W and 7UP
+              </Text>
+              <Image
+                source={require("../assets/images/cameraPointer.png")}
+                style={{ width: winWidth/2, height: winHeight/4 }}
+                resizeMode="contain"
+              />
+            </View>
+          </View>
         </View>
 
         <Toolbar
@@ -106,7 +143,6 @@ class CameraCustomScreen extends React.Component {
           onCaptureOut={this.handleCaptureOut}
           onShortCapture={this.handleShortCapture}
         />
-        
       </>
     );
   }
@@ -114,7 +150,5 @@ class CameraCustomScreen extends React.Component {
 
 export default copilot({
   overlay: "svg",
-  animated: false
+  animated: false,
 })(CameraCustomScreen);
-
-
