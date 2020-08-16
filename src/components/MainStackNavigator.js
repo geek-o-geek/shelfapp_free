@@ -6,6 +6,7 @@ import CameraPage from "../screens/CameraScreen";
 import ProcessingPage from "../screens/ProcessingScreen";
 import ReportPage from "../screens/ReportScreen";
 import { View } from 'react-native'; 
+import CameraCustomScreen from "../screens/CameraCustomScreen";
 
 const Stack = createStackNavigator();
 
@@ -19,7 +20,7 @@ function MainStackNavigator() {
         <Stack.Screen
           options={{ headerShown: false, gestureEnabled: false, swipeEnabled: false, animationEnabled: false }}
           name="CameraPage"
-          component={CameraPage}
+          component={CameraCustomScreen}
         />
         <Stack.Screen
           options={{ headerShown: false, gestureEnabled: false, swipeEnabled: false, animationEnabled: false }}

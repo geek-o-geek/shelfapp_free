@@ -28,7 +28,6 @@ import SSModal from "../components/SSModal";
 import CustomText from "../components/CustomText";
 import CustomButton from "../components/CustomButton";
 import { Colors } from "../components/Colors";
-import { StackActions } from "@react-navigation/native";
 import axios from "axios";
 import { Platform } from "react-native";
 import ImageZoom from 'react-native-image-pan-zoom';
@@ -59,9 +58,9 @@ class ReportPage extends Component {
     fullViewContent: [],
     showFullImage: false,
     downloadSuccessIndicator: false,
-    activeSlide: 1,
+    activeSlide: 0,
     imageSaved: false,
-    downloadMsg: "Image saved in gallery successfully"
+    downloadMsg: "Image saved in gallery successfully",
   };
 
   constructor(props) {
@@ -104,6 +103,38 @@ class ReportPage extends Component {
     }
   };
 
+  delLocalUrl = (filename = '') => {
+    if(!filename) return
+    const endpoint = `${config.API_URL}/api/delete/localFile?file_name=${filename}`;
+
+    try {
+      const ob = {
+        filename
+      };
+      const headers = {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      };
+
+      axios
+        .get(endpoint, headers)
+        .then(async (response) => {})
+        .catch((err) => {
+          console.log(err, "error in deleting local file api");
+        });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  componentWillUnmount = async () => {
+    const fileArr = this.state.imagePath.split("/")
+    const filename = fileArr[fileArr.length-1]
+
+    this.delLocalUrl(filename)
+  }
+
   hardwareBackPress = () => {
     if (this.state.showFullImage) {
       // LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -120,8 +151,8 @@ class ReportPage extends Component {
 
   componentWillUnmount(){
     BackHandler.removeEventListener("hardwareBackPress", this.hardwareBackPress);
-
   }
+
   componentDidMount = async () => {
     if (Platform.OS == "android") {
       UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -133,8 +164,6 @@ class ReportPage extends Component {
 
     const parsedReport = JSON.parse(report);
     const { imagePath, modelData, lastInsertId } = parsedReport;
-
-    console.log(lastInsertId, "lastInsertIdlastInsertId");
 
     this.setState({ imagePath: `${config.API_URL}${imagePath}` });
 
@@ -250,11 +279,12 @@ class ReportPage extends Component {
   };
 
   get pagination() {
+    console.log("pagination called")
     const { activeSlide } = this.state;
     return (
       <Pagination
         dotsLength={2}
-        activeDotIndex={activeSlide}
+        activeDotIndex={activeSlide || 0}
         containerStyle={{ backgroundColor: "#21252e" }}
         dotStyle={{
           width: 10,
@@ -296,7 +326,7 @@ class ReportPage extends Component {
         />
       </View>
     );
-
+    
     let viewFull = (
       <ImageZoom cropWidth={Dimensions.get('window').width}
       cropHeight={Dimensions.get('window').height}
@@ -305,7 +335,7 @@ class ReportPage extends Component {
       panToMove={true}
       pinchToZoom={true}
       enableCenterFocus={true}
-      centerOn={{ x: 0, y: 0, scale: 1, duration: 10 }}
+      centerOn={{ x: 0, y: -100, scale: 1, duration: 10 }}
       >
         <Image
           source={{
@@ -383,7 +413,7 @@ class ReportPage extends Component {
   }
 
   delete() {
-    this.props.navigation.navigate('CameraPage')
+    this.props.navigation.navigate('CameraPage');
   }
 
   downloadSuccess = () => {
@@ -482,7 +512,12 @@ class ReportPage extends Component {
           >
             <TouchableWithoutFeedback onPress={() => this.reset()}>
             {this.state.showFullImage ? 
-              <Ionicons name="md-arrow-back" size={36} style={{marginLeft:8,bottom:1}} color="#fff" />
+              <Image
+                source={require("../assets/img/x.png")}
+                style={{ width: 40, height: 40 }}
+                resizeMode="contain"
+              />
+              //   <Ionicons name="md-arrow-back" size={36} style={{marginLeft:8,bottom:1}} color="#fff" />
             :
               <Image
                 source={require("../assets/img/x.png")}
@@ -517,7 +552,7 @@ class ReportPage extends Component {
                 scrollEnabled={true}
                 containerCustomStyle={styles.carouselContainer}
                 inactiveSlideShift={0}
-                onSnapToItem={(index) => this.setState({ index })}
+                onSnapToItem={(index) => this.setState({ index, activeSlide: index })}
                 scrollInterpolator={scrollInterpolator}
                 slideInterpolatedStyle={animatedStyles}
                 useScrollView={true}

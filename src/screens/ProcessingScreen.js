@@ -9,7 +9,6 @@ import LottieWrapper from "../components/LottieWrapper";
 import SSModal from "../components/SSModal";
 import CustomText from "../components/CustomText";
 import { Colors } from "../components/Colors";
-import { NavigationActions } from 'react-navigation';
 
 @observer
 export default class ProcessingPage extends Component {
@@ -58,7 +57,7 @@ export default class ProcessingPage extends Component {
   brandClassification = (imagefile) => {
     const timer = setTimeout(() => {
       this.goBack()
-    }, 60 * 1000);
+    }, 60 * 2000);
 
     const endpoint = `${config.API_URL}/api/brandClassification`;
 
