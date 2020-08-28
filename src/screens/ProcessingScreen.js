@@ -57,15 +57,14 @@ export default class ProcessingPage extends Component {
   brandClassification = (imagefile) => {
     const timer = setTimeout(() => {
       this.goBack()
-    }, 60 * 2000);
+    }, 2 * 60 * 1000);
 
     const endpoint = `${config.API_URL}/api/brandClassification`;
 
     try {
       const formData = new FormData();
-
       formData.append("img", imagefile);
-
+      
       const headers = {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -76,8 +75,8 @@ export default class ProcessingPage extends Component {
         .post(endpoint, formData, headers)
         .then(async (response) => {
           clearTimeout(timer);
+        
           await ReportStore.setReport(JSON.stringify(response.data.results));
-          
           this.props.navigation.navigate("ReportPage");
         })
         .catch((err) => {

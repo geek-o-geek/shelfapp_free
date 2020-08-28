@@ -1,16 +1,29 @@
 import React from "react";
 import { Camera } from "expo-camera";
-import { View, Text, ActivityIndicator, Image,Dimensions } from "react-native";
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  Image,
+  Dimensions,
+  TouchableWithoutFeedback,
+  Vibration,
+} from "react-native";
 import * as Permissions from "expo-permissions";
 import ImgStore from "../stores/ImgStore";
 import styles from "../assets/styles/camera";
 import Toolbar from "./toolbar.component";
-import { copilot, walkthroughable, CopilotStep } from "react-native-copilot";
+import { copilot } from "react-native-copilot";
 import { Ionicons } from "@expo/vector-icons";
 import * as Font from "expo-font";
-const { width: winWidth, height: winHeight } = Dimensions.get('window');
+import * as ImageManipulator from "expo-image-manipulator";
+import { DeviceMotion } from "expo-sensors";
+const { width: winWidth, height: winHeight } = Dimensions.get("window");
 
-const WalkthroughableText = walkthroughable(Text);
+const SLIDER_WIDTH = Dimensions.get("window").width;
+const SLIDER_HEIGHT = Dimensions.get("window").height;
+const ITEM_WIDTH = Math.round(SLIDER_WIDTH);
+const ITEM_HEIGHT = Math.round(SLIDER_HEIGHT);
 
 class CameraCustomScreen extends React.Component {
   camera = null;
@@ -22,8 +35,9 @@ class CameraCustomScreen extends React.Component {
     flashMode: Camera.Constants.FlashMode.off,
     loaderFlag: false,
     currentCapture: {},
-    showTut:true,
+    showTut: true,
     loading: true,
+    orientation: "portrait",
   };
 
   setFlashMode = (flashMode) => this.setState({ flashMode });
@@ -39,8 +53,27 @@ class CameraCustomScreen extends React.Component {
   }
 
   handleShortCapture = async () => {
-    this.setState({showTut:false,})
-    const result = await this.camera.takePictureAsync();
+    const photo = await this.camera.takePictureAsync({
+      exif: true,
+      quality: 1
+    });
+
+    let options = { resize: { width: ITEM_WIDTH, height: ITEM_HEIGHT } }
+    
+    if(photo.exif.Orientation == 0){
+      // options = { 'rotate': 90 }
+    }
+    if(photo.exif.Orientation == 180){
+      // options = { 'rotate': 270 }
+    }
+
+    let result = await ImageManipulator.manipulateAsync(
+      photo.uri,
+      [options],
+      { compress: 0, format: "png", base64: false }
+    );
+
+    Vibration.vibrate();
 
     this.setState({
       capturing: false,
@@ -57,6 +90,9 @@ class CameraCustomScreen extends React.Component {
   };
 
   async componentDidMount() {
+    // DeviceMotion.addListener(({ orientation }) => {
+    //   console.log(orientation, "orientation")
+    // })
     await Font.loadAsync({
       ...Ionicons.font,
     });
@@ -76,6 +112,10 @@ class CameraCustomScreen extends React.Component {
         color="#edf1fe"
       />
     );
+  };
+
+  _onPressButton = () => {
+    this.setState({ showTut: false });
   };
 
   render() {
@@ -104,39 +144,39 @@ class CameraCustomScreen extends React.Component {
 
           {this.state.loaderFlag ? this._renderLoader() : null}
         </View>
-      {this.state.showTut && 
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.6)",
-            zIndex: 0,
-            position: "absolute",
-            height: "100%",
-            width: "100%",
-          }}
-        >
-          <View style={{ flex: 1, justifyContent: "center" }}>
-            <Text style={styles.txt}>
-              Detect A&W and 7UP bottles, cans and boxes
-            </Text>
-          </View>
+        {this.state.showTut && (
+          <TouchableWithoutFeedback onPress={this._onPressButton}>
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: "rgba(0,0,0,0.6)",
+                zIndex: 0,
+                position: "absolute",
+                height: "100%",
+                width: "100%",
+              }}
+            >
+              <View style={{ flex: 1, justifyContent: "center" }}>
+                <Text style={styles.txt}>
+                  Detect A&W and 7UP bottles, cans and boxes
+                </Text>
+              </View>
 
-          <View style={{ flex: 0.64, width: "50%",paddingLeft:15 }}>
-            <View style={{ alignSelf: "flex-start", alignItems: "center" }}>
-              <Text style={[styles.txt]}>
-                Press button to detect A&W and 7UP
-              </Text>
-              <Image
-                source={require("../assets/images/cameraPointer.png")}
-                style={{ width: winWidth/2, height: winHeight/4 }}
-                resizeMode="contain"
-              />
+              <View style={{ flex: 0.64, width: "50%", paddingLeft: 15 }}>
+                <View style={{ alignSelf: "flex-start", alignItems: "center" }}>
+                  <Text style={[styles.txt]}>
+                    Press button to detect A&W and 7UP
+                  </Text>
+                  <Image
+                    source={require("../assets/images/cameraPointer.png")}
+                    style={{ width: winWidth / 2, height: winHeight / 4 }}
+                    resizeMode="contain"
+                  />
+                </View>
+              </View>
             </View>
-          </View>
-        </View>
-      }
-
-
+          </TouchableWithoutFeedback>
+        )}
         <Toolbar
           capturing={capturing}
           flashMode={flashMode}

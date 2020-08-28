@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, createRef } from "react";
 import {
   Text,
   View,
@@ -11,6 +11,8 @@ import {
   Alert,
   Image,
   ActivityIndicator,
+  AppState,
+  ScrollView
 } from "react-native";
 import * as MediaLibrary from "expo-media-library";
 import { Ionicons } from '@expo/vector-icons';
@@ -31,6 +33,7 @@ import { Colors } from "../components/Colors";
 import axios from "axios";
 import { Platform } from "react-native";
 import ImageZoom from 'react-native-image-pan-zoom';
+import ImgStore from "../stores/ImgStore";
 
 const SLIDER_WIDTH = Dimensions.get("window").width;
 const SLIDER_HEIGHT = Dimensions.get("window").height;
@@ -49,24 +52,30 @@ class ReportPage extends Component {
     },
   };
 
-  state = {
-    index: 0,
-    FlatListItems: [],
-    imagePath: "",
-    modalVisible: false,
-    downloadSuccess: false,
-    fullViewContent: [],
-    showFullImage: false,
-    downloadSuccessIndicator: false,
-    activeSlide: 0,
-    imageSaved: false,
-    downloadMsg: "Image saved in gallery successfully",
-  };
+  flatList = createRef()
+  scrollOffset = 0
+  flatListtopOffset = 0
+  flatListHeight = 0
 
   constructor(props) {
     super(props);
-    this._renderItem = this._renderItem.bind(this);
     this.state = {
+      index: 0,
+      FlatListItemsArea: [],
+      FlatListItems: [],
+      imagePath: "",
+      modalVisible: false,
+      downloadSuccess: false,
+      fullViewContent: [],
+      showFullImage: false,
+      downloadSuccessIndicator: false,
+      activeSlide: 0,
+      imageSaved: false,
+      downloadMsg: "Image saved in gallery successfully",
+      annotationUrl: '',
+      originalUrl: '',
+      imagePathUri: '',
+      enableScrollViewScroll: true,
       FlatListItems: [
         { id: "1", topic: "7UP Bottles", cnt: 0 },
         { id: "2", topic: "7UP Boxes", cnt: 0 },
@@ -76,16 +85,48 @@ class ReportPage extends Component {
         { id: "6", topic: "A&W Cans", cnt: 0 },
       ],
     };
+
+    this._renderItem = this._renderItem.bind(this);
   }
 
-  setReport = (reportArr, lastInsertId) => {
+  uploadFile = ({file, folder_name}) => {
+    const endpoint = `${config.API_URL}/uploadAndSet`;
+
+    const fd = new FormData();
+
+    if(folder_name == 'annotated-images'){
+      fd.append('filePath', file)
+    }
+    else {
+      fd.append('file', file);
+    }
+
+    fd.append('folder_name', folder_name)
+
+    const headers = {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+    };
+
+    return axios.post(endpoint, fd, headers);
+  };
+
+  setReport = async (reportArr, lastInsertId) => {
+    const img = await ImgStore.getImg();
+    const response = await this.uploadFile({file: img, folder_name: 'original-images'})
+    const originalImageUrl = response.data.url
+
     const endpoint = `${config.API_URL}/api/set/reports`;
 
     try {
       const ob = {
         reports: reportArr,
         lastInsertId,
+        originalImageUrl,
+        annotatedImageUrl: ''
       };
+
       const headers = {
         headers: {
           "Content-Type": "application/json",
@@ -137,7 +178,6 @@ class ReportPage extends Component {
 
   hardwareBackPress = () => {
     if (this.state.showFullImage) {
-      // LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       this.setState({ showFullImage: false },()=>{
         setTimeout(() => {
           this.carousel.snapToItem(this.state.index,)
@@ -149,11 +189,22 @@ class ReportPage extends Component {
     }
   };
 
+  _handleAppStateChange = (nextAppState) => {
+    if(nextAppState == "inactive"){
+      const fileArr = this.state.imagePath.split("/")
+      const filename = fileArr[fileArr.length-1]
+
+      this.delLocalUrl(filename)
+    }
+  }
+
   componentWillUnmount(){
+    AppState.removeEventListener("change", this._handleAppStateChange);
     BackHandler.removeEventListener("hardwareBackPress", this.hardwareBackPress);
   }
 
   componentDidMount = async () => {
+    AppState.addEventListener("change", this._handleAppStateChange);
     if (Platform.OS == "android") {
       UIManager.setLayoutAnimationEnabledExperimental(true);
     }
@@ -165,7 +216,7 @@ class ReportPage extends Component {
     const parsedReport = JSON.parse(report);
     const { imagePath, modelData, lastInsertId } = parsedReport;
 
-    this.setState({ imagePath: `${config.API_URL}${imagePath}` });
+    this.setState({ imagePath: `${config.API_URL}${imagePath}`, imagePathUri: imagePath });
 
     const { FlatListItems } = this.state;
 
@@ -178,38 +229,55 @@ class ReportPage extends Component {
       sevenUpBottleCnt: 0,
     };
 
+    const areaArr = [
+      { id: 7, label:'7up-bottle', topic: "7UP Bottles", per: 0, cnt: 0},
+      { id: 8, label:'7up-box', topic: "7UP Boxes", per: 0, cnt: 0},
+      { id: 9, label:'7up-can', topic: "7UP Cans", per: 0, cnt: 0},
+      { id: 10, label:'aw-bottle', topic: "A&W Bottles", per: 0, cnt: 0}, 
+      { id: 11, label:'aw-box', topic: "A&W Boxes", per: 0, cnt: 0},
+      { id: 12, label:'aw-can', topic: "A&W Cans", per: 0, cnt: 0},
+    ]
+
     modelData.forEach((ob) => {
-      let { name, percentage_probability } = ob;
-
-      // filter the report data
-      if (+percentage_probability < 80) {
-        return;
-      }
-
+      let { name, area } = ob;
+      
       name = name.toLowerCase();
-
+      let cnt = 0
       switch (name) {
         case "aw-box":
           ++cntOb["awBoxCnt"];
+          cnt = cntOb["awBoxCnt"]
           break;
         case "aw-can":
           ++cntOb["awCanCnt"];
+          cnt = cntOb["awCanCnt"];
           break;
         case "aw-bottle":
           ++cntOb["awBottleCnt"];
+          cnt = cntOb["awBottleCnt"]
           break;
         case "7up-box":
           ++cntOb["sevenUpBoxCnt"];
+          cnt = cntOb["sevenUpBoxCnt"]
           break;
         case "7up-can":
           ++cntOb["sevenUpCanCnt"];
+          cnt = cntOb["sevenUpCanCnt"]
           break;
         case "7up-bottle":
           ++cntOb["sevenUpBottleCnt"];
+          cnt = cntOb["sevenUpBottleCnt"];
           break;
         default:
           break;
       }
+
+      areaArr.forEach(ob => {
+        if(ob.label.toLowerCase() == name){
+          ob.per += area
+          ob['cnt'] = cnt
+        }
+      })
     });
 
     const insertArr = [];
@@ -220,54 +288,53 @@ class ReportPage extends Component {
     FlatListItems.forEach((ob) => {
       let { topic } = ob;
 
+      let item = areaArr.filter(obj => obj.topic.toLowerCase() == topic.toLowerCase())[0]
+      let area = item.cnt != 0? (item.per/item.cnt).toFixed(2): 0
+
       switch (topic) {
         case "A&W Boxes":
-          const obj = { cnt: +cntOb["awBoxCnt"], objectId: 2, brandId: 1 };
+          let cnt = +cntOb["awBoxCnt"]
+          const obj = { cnt, objectId: 2, brandId: 1, area };
           insertArr.push(obj);
-          ob["cnt"] = +cntOb["awBoxCnt"];
+          ob["cnt"] = cnt;
           break;
         case "A&W Cans":
-          const obj1 = { cnt: +cntOb["awCanCnt"], objectId: 1, brandId: 1 };
+          let cnt1 = +cntOb["awCanCnt"]
+          const obj1 = { cnt: cnt1, objectId: 1, brandId: 1, area };
           insertArr.push(obj1);
-          ob["cnt"] = +cntOb["awCanCnt"];
+          ob["cnt"] = cnt1
           break;
         case "A&W Bottles":
-          const obj2 = { cnt: +cntOb["awCanCnt"], objectId: 3, brandId: 1 };
+          let cnt2 = +cntOb["awBottleCnt"]
+          const obj2 = { cnt: cnt2, objectId: 3, brandId: 1, area };
           insertArr.push(obj2);
-          ob["cnt"] = +cntOb["awBottleCnt"];
+          ob["cnt"] = cnt2;
           break;
         case "7UP Boxes":
-          const obj3 = { cnt: +cntOb["awCanCnt"], objectId: 2, brandId: 2 };
+          let cnt3 = +cntOb["sevenUpBoxCnt"]
+          const obj3 = { cnt: cnt3, objectId: 2, brandId: 2, area };
           insertArr.push(obj3);
-          ob["cnt"] = +cntOb["sevenUpBoxCnt"];
+          ob["cnt"] = cnt3;
           break;
         case "7UP Cans":
-          const obj4 = { cnt: +cntOb["awCanCnt"], objectId: 1, brandId: 2 };
+          let cnt4 = +cntOb["sevenUpCanCnt"]
+          const obj4 = { cnt: cnt4, objectId: 1, brandId: 2, area };
           insertArr.push(obj4);
-          ob["cnt"] = +cntOb["sevenUpCanCnt"];
+          ob["cnt"] = cnt4;
           break;
         case "7UP Bottles":
-          const obj5 = { cnt: +cntOb["awCanCnt"], objectId: 3, brandId: 2 };
+          let cnt5 = +cntOb["sevenUpBottleCnt"]
+          const obj5 = { cnt: cnt5, objectId: 3, brandId: 2, area };
           insertArr.push(obj5);
-          ob["cnt"] = +cntOb["sevenUpBottleCnt"];
+          ob["cnt"] = cnt5;
           break;
         default:
           break;
       }
     });
-
+    
+    this.setState({ FlatListItems, FlatListItemsArea: areaArr });
     this.setReport(insertArr, lastInsertId);
-
-    cntOb = {
-      awBoxCnt: 0,
-      awCanCnt: 0,
-      awBottleCnt: 0,
-      sevenUpBoxCnt: 0,
-      sevenUpCanCnt: 0,
-      sevenUpBottleCnt: 0,
-    };
-
-    this.setState({ FlatListItems });
   };
 
   FlatListItemSeparator = () => {
@@ -279,8 +346,8 @@ class ReportPage extends Component {
   };
 
   get pagination() {
-    console.log("pagination called")
     const { activeSlide } = this.state;
+    
     return (
       <Pagination
         dotsLength={2}
@@ -318,7 +385,7 @@ class ReportPage extends Component {
           source={{
             uri: this.state.imagePath,
           }}
-          resizeMode={"center"}
+          resizeMode={"contain"}
           style={[
             styles.imgDimensions,
             this.state.showFullImage && { height: ITEM_HEIGHT },
@@ -335,14 +402,14 @@ class ReportPage extends Component {
       panToMove={true}
       pinchToZoom={true}
       enableCenterFocus={true}
-      centerOn={{ x: 0, y: -100, scale: 1, duration: 10 }}
+      centerOn={{ x: 0, y: 0, scale: 1, duration: 10 }}
       >
         <Image
           source={{
             uri: this.state.imagePath,
           }}
           resizeMode={"contain"}
-          style={[styles.imgDimensions, { height: ITEM_HEIGHT }]}
+          style={[styles.imgDimensions, { height: ITEM_HEIGHT * 0.8 }]}
         />
       </ImageZoom>
     );
@@ -356,55 +423,57 @@ class ReportPage extends Component {
     );
   };
 
+  onEnableScroll= (value) => {
+    this.setState({
+      enableScrollViewScroll: value,
+    });
+  };
+
   _renderTableItem = () => {
-    let view = (
-      <View style={[styles.itemContainer, { marginTop: 10 }]}>
-        <Text style={styles.headTitle}>Report:</Text>
-        <FlatList
-          data={this.state.FlatListItems}
-          renderItem={({ item }) => (
-            <View style={styles.listItem}>
-              {item.id == 1 ? (
-                <Text style={styles.subHeadTitle}>Count:</Text>
-              ) : null}
-              <Text
-                style={styles.item}
-                onPress={this.GetItem.bind(this, `${item.topic} : ${item.cnt}`)}
-              >
-                {item.topic} : {item.cnt}
-              </Text>
-            </View>
-          )}
-        />
-      </View>
-    );
     return (
-      <TouchableWithoutFeedback
-        onPress={() => this.viewFullImage("report", view)}
-      >
-        <View style={styles.itemContainer}>
+        <SafeAreaView style={styles.itemContainer}
+        onStartShouldSetResponderCapture={() => {
+          this.setState({ enableScrollViewScroll: true });
+        }}>
           <Text style={styles.headTitle}>Report:</Text>
+          <ScrollView 
+            scrollEnabled={this.state.enableScrollViewScroll}
+            ref={myScroll => (this._myScroll = myScroll)}
+            >
+          <View style={{flex:1}}
+          onStartShouldSetResponderCapture={() => {
+          this.setState({ enableScrollViewScroll: false });
+          if (this._myScroll.contentOffset === 0
+            && this.state.enableScrollViewScroll === false) {
+            this.setState({ enableScrollViewScroll: true });
+          }
+        }}>
           <FlatList
-            data={this.state.FlatListItems}
+            onScroll={e => {
+              this.scrollOffset = e.nativeEvent.contentOffset.y
+            }}
+            ref={this.flatList}
+            scrollEnabled={true}
+            data={[...this.state.FlatListItems, ...this.state.FlatListItemsArea]}
+            onLayout={
+              e => {
+                this.flatListtopOffset = e.nativeEvent.layout.y;
+                this.flatListHeight = e.nativeEvent.layout.height;
+              }
+            }
             renderItem={({ item }) => (
               <View style={styles.listItem}>
-                {item.id == 1 ? (
-                  <Text style={styles.subHeadTitle}>Count:</Text>
-                ) : null}
                 <Text
                   style={styles.item}
-                  onPress={this.GetItem.bind(
-                    this,
-                    `${item.topic} : ${item.cnt}`
-                  )}
                 >
-                  {item.topic} : {item.cnt}
+                  {item.topic} : {item.per>=0? (item.cnt != 0? `${(item.per/item.cnt).toFixed(2)}%`: `0%`): item.cnt}
                 </Text>
               </View>
             )}
           />
-        </View>
-      </TouchableWithoutFeedback>
+          </View>
+        </ScrollView>
+        </SafeAreaView>
     );
   };
 
@@ -451,8 +520,8 @@ class ReportPage extends Component {
 
     if (!uri) return;
     this.setState({ downloadSuccess: false, downloadSuccessIndicator: true });
-    let fileUri =
-      FileSystem.documentDirectory + `shelfset_${new Date().toISOString()}.jpg`;
+    let fileUri = FileSystem.documentDirectory + `shelfset_${new Date().toISOString()}.jpg`;
+    
     FileSystem.downloadAsync(uri, fileUri)
       .then(({ uri }) => {
         this.saveFile(uri);
@@ -470,11 +539,20 @@ class ReportPage extends Component {
       });
   }
 
-  saveFile = async (fileUri: string) => {
+  saveFile = async (fileUri) => {
     const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
     if (status === "granted") {
-      const asset = await MediaLibrary.createAssetAsync(fileUri);
-      await MediaLibrary.createAlbumAsync("Shelfset", asset, false);
+      const cachedAsset = await MediaLibrary.createAssetAsync(fileUri);
+      
+      const albumName = 'Shelfset';
+      const album = await MediaLibrary.getAlbumAsync(albumName)
+      
+      if(album){
+        await MediaLibrary.addAssetsToAlbumAsync([cachedAsset], album, false);
+      }else{
+        const asset = await MediaLibrary.createAssetAsync(fileUri);
+        await MediaLibrary.createAlbumAsync(albumName, asset);
+      }
     }
   };
 
@@ -548,7 +626,7 @@ class ReportPage extends Component {
                 data={DATA}
                 renderItem={this._renderItem}
                 sliderWidth={SLIDER_WIDTH}
-                itemWidth={ITEM_WIDTH * 0.9}
+                itemWidth={ITEM_WIDTH}
                 scrollEnabled={true}
                 containerCustomStyle={styles.carouselContainer}
                 inactiveSlideShift={0}
@@ -626,10 +704,16 @@ const styles = StyleSheet.create({
     left: 35,
     top: 60,
   },
-  headTitle: {
-    fontSize: 42,
+  listItemOther: {
+    padding: 10,
+    fontSize: 18,
+    lineHeight: 21,
     left: 35,
-    top: 48,
+  },
+  headTitle: {
+    fontSize: 30,
+    left: 35,
+    top: 24,
   },
   subHeadTitle: {
     fontSize: 24,
@@ -637,7 +721,7 @@ const styles = StyleSheet.create({
   },
   imgDimensions: {
     width: ITEM_WIDTH,
-    height: ITEM_HEIGHT - 250,
+    height: ITEM_HEIGHT-100,
   },
   modal: {
     padding: 25,
