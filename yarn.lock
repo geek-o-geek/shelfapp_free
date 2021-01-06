@@ -958,6 +958,13 @@
   dependencies:
     "@types/hammerjs" "^2.0.36"
 
+"@expo/vector-icons@^10.0.0":
+  version "10.2.1"
+  resolved "https://registry.yarnpkg.com/@expo/vector-icons/-/vector-icons-10.2.1.tgz#47fb2fa12d7ad601835babde6bd3ddea7f6fde89"
+  integrity sha512-clYQZFLeU2y23n03hXg18EEsZS5c73sJJnfderztfSAqkUXkfUtv07fwuprYwbHIvgFkw6L7R6xJOCVYtS85iQ==
+  dependencies:
+    lodash "^4.17.4"
+
 "@expo/vector-icons@^10.0.2":
   version "10.2.0"
   resolved "https://registry.yarnpkg.com/@expo/vector-icons/-/vector-icons-10.2.0.tgz#3c70656683a6a873e18efc00bc61fc160a80dc55"
@@ -1546,12 +1553,12 @@ atob@^2.1.2:
   resolved "https://registry.yarnpkg.com/atob/-/atob-2.1.2.tgz#6d9517eb9e030d2436666651e86bd9f6f13533c9"
   integrity sha512-Wm6ukoaOGJi/73p/cl2GvLjTI5JM1k/O14isD73YML8StrH/7/lRFgmg8nICZgD3bZZvjwCGxtMOD3wWNAu8cg==
 
-axios@^0.19.2:
-  version "0.19.2"
-  resolved "https://registry.yarnpkg.com/axios/-/axios-0.19.2.tgz#3ea36c5d8818d0d5f8a8a97a6d36b86cdc00cb27"
-  integrity sha512-fjgm5MvRHLhx+osE2xoekY70AhARk3a6hkN+3Io1jc00jtquGvxYlKlsFUhmUET0V5te6CcZI7lcv2Ym61mjHA==
+axios@^0.21.1:
+  version "0.21.1"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-0.21.1.tgz#22563481962f4d6bde9a76d516ef0e5d3c09b2b8"
+  integrity sha512-dKQiRHxGD9PPRIUNIWvZhPTPpl1rf/OxTYKsqKUDjBwYylTvV7SjSHJb9ratfyzM6wCdLCOYLzs73qpg5c4iGA==
   dependencies:
-    follow-redirects "1.5.10"
+    follow-redirects "^1.10.0"
 
 babel-code-frame@^6.26.0:
   version "6.26.0"
@@ -2274,13 +2281,6 @@ debug@2.6.9, debug@^2.2.0, debug@^2.3.3, debug@^2.6.8:
   dependencies:
     ms "2.0.0"
 
-debug@=3.1.0:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/debug/-/debug-3.1.0.tgz#5bb5a0672628b64149566ba16819e61518c67261"
-  integrity sha512-OX8XqP7/1a9cqkxYw2yXss15f26NKWBpDXQd0/uK/KPqdQhxbPa994hnzjcE2VqQpDslf55723cKPUOGSmMY3g==
-  dependencies:
-    ms "2.0.0"
-
 debug@^4.1.0:
   version "4.1.1"
   resolved "https://registry.yarnpkg.com/debug/-/debug-4.1.1.tgz#3b72260255109c6b589cee050f1d516139664791"
@@ -2605,6 +2605,11 @@ expo-font@~8.1.0:
     fbjs "1.0.0"
     fontfaceobserver "^2.1.0"
 
+expo-image-manipulator@~8.1.0:
+  version "8.1.0"
+  resolved "https://registry.yarnpkg.com/expo-image-manipulator/-/expo-image-manipulator-8.1.0.tgz#63ae66e1a65e5be8c6ee7036fe88d53af551853f"
+  integrity sha512-ephPXtzEx32Js1SQ1B2IXdpi4Gn34DIMQGAOwrwOPfUuWXQX9jGxyX3tktIGMmQ7lHueVr0a8zdh6ME0YGHjkw==
+
 expo-image-picker@~8.1.0:
   version "8.1.0"
   resolved "https://registry.yarnpkg.com/expo-image-picker/-/expo-image-picker-8.1.0.tgz#014e4f4aaef4c1daf56d13de27a41ef78660aa15"
@@ -2647,6 +2652,18 @@ expo-permissions@~8.1.0:
   version "8.1.0"
   resolved "https://registry.yarnpkg.com/expo-permissions/-/expo-permissions-8.1.0.tgz#a7f2ee91ba76ce3a467e7b10adaa9ca5201b226f"
   integrity sha512-QBHD+1J9+sGFnhoEGzMRchPweeEE0OJ9ehG/0l1BMRBA7qsLS9vRC1FTJ55NwjI0Kr4RTha9r6ZX1kZHT09f/w==
+
+expo-screen-orientation@~1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/expo-screen-orientation/-/expo-screen-orientation-1.0.0.tgz#a168b7493e7a7b45da2c80b1b0d4e89e1f8e7698"
+  integrity sha512-McYHWSA3KVgh3IeztKg0oxkHtSRzDfqGRSHg6GgIici5C93LOF4tGzO38tLNVGXIjbu8EdvBRB7pslKS73AXGg==
+
+expo-sensors@~8.1.0:
+  version "8.1.0"
+  resolved "https://registry.yarnpkg.com/expo-sensors/-/expo-sensors-8.1.0.tgz#2b46cb80c7e18a9fab9a6aca4e99c558a93389e1"
+  integrity sha512-WLpAOfrYkJiOu+Erhjg20EKcCOaFLfm1JGRz9wiLsXH8ebY13KL2qFSpTVt89eGF66DtV/zwchCqRAjrNGdzTw==
+  dependencies:
+    invariant "^2.2.4"
 
 expo-sqlite@~8.1.0:
   version "8.1.0"
@@ -2906,12 +2923,10 @@ find-up@^4.1.0:
     locate-path "^5.0.0"
     path-exists "^4.0.0"
 
-follow-redirects@1.5.10:
-  version "1.5.10"
-  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.5.10.tgz#7b7a9f9aea2fdff36786a94ff643ed07f4ff5e2a"
-  integrity sha512-0V5l4Cizzvqt5D44aTXbFZz+FtyXV1vrDN6qrelxtfYQKW0KO0W2T/hkE8xvGa/540LkZlkaUjO4ailYTFtHVQ==
-  dependencies:
-    debug "=3.1.0"
+follow-redirects@^1.10.0:
+  version "1.13.1"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.13.1.tgz#5f69b813376cee4fd0474a3aba835df04ab763b7"
+  integrity sha512-SSG5xmZh1mkPGyKzjZP8zLjltIfpW32Y5QpdNJyjcfGxK3qo3NDDkZOZSFiGn1A6SclQxY9GzEwAHQ3dmYRWpg==
 
 fontfaceobserver@^2.1.0:
   version "2.1.0"
@@ -3093,7 +3108,7 @@ hoist-non-react-statics@^2.3.1:
   resolved "https://registry.yarnpkg.com/hoist-non-react-statics/-/hoist-non-react-statics-2.5.5.tgz#c5903cf409c0dfd908f388e619d86b9c1174cb47"
   integrity sha512-rqcy4pJo55FTTLWt+bU8ukscqHeE/e9KWvsOW2b/a3afxQZhwkQdT1rPPCJ0rYXdj4vNcasY8zHTH+jF/qStxw==
 
-hoist-non-react-statics@^3.3.0, hoist-non-react-statics@^3.3.2:
+hoist-non-react-statics@^3.0.1, hoist-non-react-statics@^3.3.0, hoist-non-react-statics@^3.3.2:
   version "3.3.2"
   resolved "https://registry.yarnpkg.com/hoist-non-react-statics/-/hoist-non-react-statics-3.3.2.tgz#ece0acaf71d62c2969c2ec59feff42a4b1a85b45"
   integrity sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==
@@ -4107,6 +4122,11 @@ minimist@^1.1.1, minimist@^1.2.0, minimist@^1.2.5:
   resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.5.tgz#67d66014b66a6a8aaa0c083c5fd58df4e4e97602"
   integrity sha512-FM9nNUYrRBAELZQT3xeZQ7fmMOBg6nWNmJKTcgsJeaLstP/UODVpGsr5OhXhhXg6f+qtJ8uiZ+PUxkDWcgIXLw==
 
+mitt@^1.1.3:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/mitt/-/mitt-1.2.0.tgz#cb24e6569c806e31bd4e3995787fe38a04fdf90d"
+  integrity sha512-r6lj77KlwqLhIUku9UWYes7KJtsczvolZkzp8hbaDPPaE24OmWl5s539Mytlj22siEQKosZ26qCBgda2PKwoJw==
+
 mixin-deep@^1.2.0:
   version "1.3.2"
   resolved "https://registry.yarnpkg.com/mixin-deep/-/mixin-deep-1.3.2.tgz#1120b43dc359a785dce65b55b82e257ccf479566"
@@ -4805,6 +4825,14 @@ react-native-animatable@1.3.3:
   dependencies:
     prop-types "^15.7.2"
 
+react-native-copilot@^2.5.0:
+  version "2.5.1"
+  resolved "https://registry.yarnpkg.com/react-native-copilot/-/react-native-copilot-2.5.1.tgz#1ef174fedb422b3981ee440970d34a733e35845b"
+  integrity sha512-THo7rFV35Ffnwz+2vS01H8PXUXc5IAk+CLD5Rd3kWTNla+cBww8hhxKxJc8pJF7xj+o8NZqCDPy+R6LjtFuBLQ==
+  dependencies:
+    hoist-non-react-statics "^3.0.1"
+    mitt "^1.1.3"
+
 react-native-easy-grid@^0.2.2:
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/react-native-easy-grid/-/react-native-easy-grid-0.2.2.tgz#f0be33620be1ebe2d2295918eb58b0a27e8272ab"
@@ -4831,6 +4859,11 @@ react-native-gesture-handler@~1.6.0:
     hoist-non-react-statics "^2.3.1"
     invariant "^2.2.4"
     prop-types "^15.7.2"
+
+react-native-image-pan-zoom@^2.1.12:
+  version "2.1.12"
+  resolved "https://registry.yarnpkg.com/react-native-image-pan-zoom/-/react-native-image-pan-zoom-2.1.12.tgz#eb98bf56fb5610379bdbfdb63219cc1baca98fd2"
+  integrity sha512-BF66XeP6dzuANsPmmFsJshM2Jyh/Mo1t8FsGc1L9Q9/sVP8MJULDabB1hms+eAoqgtyhMr5BuXV3E1hJ5U5H6Q==
 
 react-native-iphone-x-helper@^1.2.1:
   version "1.2.1"
